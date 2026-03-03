@@ -44,16 +44,16 @@ height:450px;
 display:flex;
 justify-content:center;
 align-items:center;
-perspective:900px;
+position:relative;
 }
 .character{
 width:120px;
 height:300px;
 position:relative;
-transition:transform .1s linear;
 display:flex;
 flex-direction:column;
 align-items:center;
+transition:transform .1s linear;
 }
 .head{
 width:100px;
@@ -167,6 +167,9 @@ width:200px;
 text-align:center;
 font-size:14px;
 }
+
+/* ROTATION 2D */
+.rotate-button{margin:5px;padding:5px 10px;background:#fff;color:#000;border:none;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -181,7 +184,7 @@ font-size:14px;
 <script>
 /* STATE */
 let karma = parseInt(localStorage.getItem("karma"))||0;
-let player = JSON.parse(localStorage.getItem("player"))||{name:null,hp:100,maxHp:100,resistance:10};
+let player = JSON.parse(localStorage.getItem("player"))||{name:null,hp:100,maxHp:100,resistance:10,direction:"front"};
 let activeEffects = JSON.parse(localStorage.getItem("effects"))||[];
 let lastEntityInteraction = 0;
 
@@ -250,6 +253,10 @@ document.getElementById("content").innerHTML=`
 
 <div class="card">
 <button onclick="interactEntity()">Falar com a entidade</button>
+<div>
+<button class="rotate-button" onclick="rotateCharacter('left')">Girar Esquerda</button>
+<button class="rotate-button" onclick="rotateCharacter('right')">Girar Direita</button>
+</div>
 </div>
 `;
 setupCharacter();
@@ -275,8 +282,16 @@ let dx=(x-cx)/20;
 let dy=(y-cy)/20;
 pupilL.style.transform=`translate(${dx}px,${dy}px)`;
 pupilR.style.transform=`translate(${dx}px,${dy}px)`;
-character.style.transform=`rotateX(${-(y-cy)/30}deg) rotateY(${(x-cx)/30}deg)`;
+character.style.transform=`rotateY(${(x-cx)/30}deg)`;
 }
+}
+
+/* ROTATE 2D */
+function rotateCharacter(dir){
+if(dir==="left") player.direction = player.direction==="front"?"back":player.direction==="back"?"front":player.direction;
+if(dir==="right") player.direction = player.direction==="front"?"back":player.direction==="back"?"front":player.direction;
+saveAll();
+renderProfile();
 }
 
 /* BATTLE SYSTEM */
@@ -351,6 +366,7 @@ player.name = nameInput;
 player.hp = 100;
 player.maxHp = 100;
 player.resistance = 10;
+player.direction = "front";
 saveAll();
 renderDashboard();
 }
