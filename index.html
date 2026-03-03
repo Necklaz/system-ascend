@@ -1,271 +1,259 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>System Ascend</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>System Ascend</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    body {
-      display: flex;
-      height: 100vh;
-    }
-
-    body.dark {
-      background-color: #0e0e0e;
-      color: white;
-    }
-
-    body.light {
-      background-color: #f4f4f4;
-      color: #111;
-    }
-
-    .sidebar {
-      width: 220px;
-      padding: 30px 20px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    body.dark .sidebar { background-color: #141414; }
-    body.light .sidebar { background-color: #ffffff; }
-
-    .sidebar h2 {
-      margin-bottom: 40px;
-      font-size: 18px;
-      letter-spacing: 2px;
-    }
-
-    .menu-item {
-      margin-bottom: 20px;
-      cursor: pointer;
-      opacity: 0.6;
-    }
-
-    .menu-item:hover { opacity: 1; }
-    .menu-item.active { font-weight: bold; opacity: 1; }
-
-    .main {
-      flex: 1;
-      padding: 40px;
-    }
-
-    .card {
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    body.dark .card { background-color: #1c1c1c; }
-    body.light .card {
-      background-color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    .xp-bar {
-      width: 100%;
-      height: 10px;
-      background-color: #333;
-      border-radius: 5px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-
-    .xp-fill {
-      height: 100%;
-      background-color: white;
-    }
-
-    .toggle-btn, .xp-btn {
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    body.dark .toggle-btn,
-    body.dark .xp-btn {
-      background-color: white;
-      color: black;
-    }
-
-    body.light .toggle-btn,
-    body.light .xp-btn {
-      background-color: black;
-      color: white;
-    }
-  </style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{display:flex;height:100vh;background:#0e0e0e;color:white}
+.sidebar{width:240px;background:#141414;padding:20px}
+.menu-item{margin-bottom:15px;cursor:pointer;opacity:.7}
+.menu-item:hover{opacity:1}
+.menu-item.active{font-weight:bold;opacity:1}
+.main{flex:1;padding:30px;overflow:auto}
+.card{background:#1c1c1c;padding:20px;border-radius:8px;margin-bottom:20px}
+button{padding:8px 12px;margin-top:8px;cursor:pointer;border:none;background:white;color:black;font-weight:bold}
+.xp-bar{width:100%;height:10px;background:#333;border-radius:5px;margin-top:10px}
+.xp-fill{height:100%;background:white}
+.skill{border-left:4px solid gray;padding-left:10px;margin-bottom:10px}
+.unlocked{border-left:4px solid gold}
+</style>
 </head>
 
-<body class="dark">
+<body>
 
-  <div class="sidebar">
-    <h2>SYSTEM</h2>
-    <div class="menu-item active" onclick="showPage('dashboard', this)">Dashboard</div>
-    <div class="menu-item" onclick="showPage('goals', this)">Goals</div>
-    <div class="menu-item" onclick="showPage('streak', this)">Streak</div>
-    <div class="menu-item" onclick="showPage('profile', this)">Profile</div>
+<div class="sidebar">
+<h2>SYSTEM</h2>
+<div class="menu-item active" onclick="showPage('dashboard',this)">Dashboard</div>
+<div class="menu-item" onclick="showPage('profile',this)">Profile</div>
+<div class="menu-item" onclick="showPage('skills',this)">Skill Tree</div>
+</div>
 
-    <button class="toggle-btn" onclick="toggleMode()">Toggle Mode</button>
-  </div>
+<div class="main" id="content"></div>
 
-  <div class="main" id="content"></div>
+<script>
 
-  <script>
+let xp=parseInt(localStorage.getItem("xp"))||0;
+let player=JSON.parse(localStorage.getItem("player"))||null;
 
-    let xp = parseInt(localStorage.getItem("xp")) || 0;
+function save(){
+localStorage.setItem("xp",xp);
+localStorage.setItem("player",JSON.stringify(player));
+}
 
-    const missions = [
-      { name: "Treino físico intenso", type: "Daily", xp: 20 },
-      { name: "Estudo foco total 2h", type: "Daily", xp: 20 },
-      { name: "Meta semanal concluída", type: "Weekly", xp: 100 },
-      { name: "Projeto entregue", type: "Hard", xp: 250 },
-      { name: "Desafio extremo completo", type: "Legendary", xp: 500 }
-    ];
+function calculateLevel(totalXp){
+let level=1;
+let xpNeeded=100;
+while(totalXp>=xpNeeded){
+totalXp-=xpNeeded;
+level++;
+xpNeeded=level*100;
+}
+return level;
+}
 
-    function calculateLevel(totalXp) {
-      let level = 1;
-      let xpNeeded = 100;
+function xpForNext(level){
+return level*100;
+}
 
-      while (totalXp >= xpNeeded) {
-        totalXp -= xpNeeded;
-        level++;
-        xpNeeded = level * 100;
-      }
+function createCharacter(name,cls,race){
 
-      return level;
-    }
+player={
+name:name,
+class:cls,
+race:race,
+level:1,
+skillPoints:0,
+attributes:{strength:5,intelligence:5,discipline:5,energy:5},
+skillsUnlocked:[]
+};
 
-    function xpForNextLevel(level) {
-      return level * 100;
-    }
+if(cls==="Warrior") player.attributes.strength+=5;
+if(cls==="Scholar") player.attributes.intelligence+=5;
+if(cls==="Monk") player.attributes.discipline+=5;
+if(cls==="Strategist"){
+player.attributes.strength+=2;
+player.attributes.intelligence+=2;
+player.attributes.discipline+=2;
+player.attributes.energy+=2;
+}
 
-    function currentXpInLevel(totalXp) {
-      let level = 1;
-      let xpNeeded = 100;
+save();
+renderDashboard();
+}
 
-      while (totalXp >= xpNeeded) {
-        totalXp -= xpNeeded;
-        level++;
-        xpNeeded = level * 100;
-      }
+function levelCheck(){
+let lvl=calculateLevel(xp);
+if(lvl>player.level){
+let diff=lvl-player.level;
+player.skillPoints+=diff*2;
+if(player.skillsUnlocked.includes("Adaptable")) player.skillPoints+=diff;
+if(player.race==="Half-Orc") player.attributes.strength+=diff;
+player.level=lvl;
+save();
+}
+}
 
-      return totalXp;
-    }
+function missionReward(base,type){
+let reward=base;
 
-    function addXp(amount) {
-      xp += amount;
-      localStorage.setItem("xp", xp);
-      renderDashboard();
-    }
+if(player.class==="Warrior" && player.skillsUnlocked.includes("Brutal Force") && type==="Hard") reward*=1.2;
+if(player.class==="Warrior" && player.skillsUnlocked.includes("Unstoppable") && type==="Legendary") reward*=1.2;
 
-    function renderDashboard() {
-      const level = calculateLevel(xp);
-      const xpInLevel = currentXpInLevel(xp);
-      const nextLevelXp = xpForNextLevel(level);
-      const progressPercent = (xpInLevel / nextLevelXp) * 100;
+if(player.class==="Scholar" && player.skillsUnlocked.includes("Deep Focus") && type==="Weekly") reward*=1.25;
+if(player.skillsUnlocked.includes("Analytical Mind")) reward*=1.1;
 
-      const content = document.getElementById("content");
+if(player.race==="Dragonborn") reward*=1.1;
+if(player.race==="Half-Elf") reward*=1.05;
+if(player.race==="Tiefling" && type==="Legendary") reward*=1.1;
+if(player.race==="Orc" && type==="Hard") reward*=1.15;
+if(player.race==="Gnome" && type==="Weekly") reward*=1.15;
+if(player.race==="Elf" && type==="Weekly") reward*=1.1;
 
-      content.innerHTML = `
-        <h1>Dashboard</h1>
-        <div class="card">
-          <h3>Level ${level}</h3>
-          <p>XP: ${xpInLevel} / ${nextLevelXp}</p>
-          <div class="xp-bar">
-            <div class="xp-fill" style="width:${progressPercent}%"></div>
-          </div>
-        </div>
-      `;
-    }
+return Math.floor(reward);
+}
 
-    function renderGoals() {
-      const content = document.getElementById("content");
+function completeMission(type){
+let base=100;
+if(type==="Hard") base=250;
+if(type==="Legendary") base=500;
+if(type==="Daily") base=20;
 
-      let missionsHTML = missions.map((mission, index) => `
-        <div class="card">
-          <h3>${mission.name}</h3>
-          <p>Type: ${mission.type}</p>
-          <p>Reward: +${mission.xp} XP</p>
-          <button class="xp-btn" onclick="completeMission(${index})">
-            Complete Mission
-          </button>
-        </div>
-      `).join("");
+let reward=missionReward(base,type);
+xp+=reward;
+levelCheck();
+save();
+renderDashboard();
+}
 
-      content.innerHTML = `
-        <h1>Goals</h1>
-        ${missionsHTML}
-      `;
-    }
+function unlockSkill(name){
+if(player.skillPoints<=0) return;
+if(player.skillsUnlocked.includes(name)) return;
+player.skillsUnlocked.push(name);
+player.skillPoints--;
+save();
+renderSkills();
+}
 
-    function completeMission(index) {
-      addXp(missions[index].xp);
-    }
+function renderDashboard(){
 
-    function showPage(page, element) {
-      document.querySelectorAll(".menu-item").forEach(item => {
-        item.classList.remove("active");
-      });
+if(!player){
+document.getElementById("content").innerHTML=`
+<div class="card">
+<input id="name" placeholder="Name"><br>
+<select id="race">
+<option>Human</option><option>Elf</option><option>Dwarf</option>
+<option>Orc</option><option>Halfling</option><option>Tiefling</option>
+<option>Dragonborn</option><option>Gnome</option>
+<option>Half-Elf</option><option>Half-Orc</option>
+</select><br>
+<select id="class">
+<option>Warrior</option><option>Scholar</option>
+<option>Monk</option><option>Strategist</option>
+</select><br>
+<button onclick="start()">Start</button>
+</div>`;
+return;
+}
 
-      element.classList.add("active");
+let lvl=calculateLevel(xp);
+let next=xpForNext(lvl);
+let progress=(xp%next)/next*100;
 
-      if (page === "dashboard") renderDashboard();
-      if (page === "goals") renderGoals();
+document.getElementById("content").innerHTML=`
+<h1>${player.name}</h1>
+<div class="card">
+<p>Race: ${player.race}</p>
+<p>Class: ${player.class}</p>
+<p>Level: ${lvl}</p>
+<p>Skill Points: ${player.skillPoints}</p>
+<div class="xp-bar"><div class="xp-fill" style="width:${progress}%"></div></div>
+</div>
 
-      if (page === "streak") {
-        document.getElementById("content").innerHTML = `
-          <h1>Streak</h1>
-          <div class="card">
-            <p>Coming soon.</p>
-          </div>
-        `;
-      }
+<div class="card">
+<button onclick="completeMission('Daily')">Daily</button>
+<button onclick="completeMission('Weekly')">Weekly</button>
+<button onclick="completeMission('Hard')">Hard</button>
+<button onclick="completeMission('Legendary')">Legendary</button>
+</div>
+`;
+}
 
-      if (page === "profile") {
-        document.getElementById("content").innerHTML = `
-          <h1>Profile</h1>
-          <div class="card">
-            <p>Total XP: ${xp}</p>
-            <p>Current Level: ${calculateLevel(xp)}</p>
-          </div>
-        `;
-      }
-    }
+function renderProfile(){
+document.getElementById("content").innerHTML=`
+<div class="card">
+<p>Strength: ${player.attributes.strength}</p>
+<p>Intelligence: ${player.attributes.intelligence}</p>
+<p>Discipline: ${player.attributes.discipline}</p>
+<p>Energy: ${player.attributes.energy}</p>
+</div>`;
+}
 
-    function toggleMode() {
-      const body = document.body;
+function renderSkills(){
 
-      if (body.classList.contains("dark")) {
-        body.classList.remove("dark");
-        body.classList.add("light");
-        localStorage.setItem("theme", "light");
-      } else {
-        body.classList.remove("light");
-        body.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-      }
-    }
+let classSkills={
+Warrior:["Brutal Force","Unstoppable","Iron Will"],
+Scholar:["Deep Focus","Analytical Mind","Efficiency"],
+Monk:["Inner Balance","Focused Spirit","Calm Mind"],
+Strategist:["Optimizer","Tactical Insight","Momentum"]
+};
 
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      document.body.classList.remove("dark", "light");
-      document.body.classList.add(savedTheme);
-    }
+let raceSkill={
+Human:"Adaptable",
+Elf:"Arcane Mind",
+Dwarf:"Stone Skin",
+Orc:"Berserker",
+Halfling:"Lucky",
+Tiefling:"Infernal Pact",
+Dragonborn:"Draconic Power",
+Gnome:"Genius",
+"Half-Elf":"Hybrid Talent",
+"Half-Orc":"Savage Growth"
+};
 
-    showPage("dashboard", document.querySelector(".menu-item"));
+let html=`<h1>Skill Tree</h1><div class="card">`;
 
-  </script>
+classSkills[player.class].forEach(s=>{
+let unlocked=player.skillsUnlocked.includes(s);
+html+=`<div class="skill ${unlocked?'unlocked':''}">
+<p>${s}</p>
+<button onclick="unlockSkill('${s}')">Unlock</button>
+</div>`;
+});
+
+let rs=raceSkill[player.race];
+let unlocked=player.skillsUnlocked.includes(rs);
+html+=`<h3>Racial Skill</h3>
+<div class="skill ${unlocked?'unlocked':''}">
+<p>${rs}</p>
+<button onclick="unlockSkill('${rs}')">Unlock</button>
+</div>`;
+
+html+=`</div>`;
+document.getElementById("content").innerHTML=html;
+}
+
+function start(){
+createCharacter(
+document.getElementById("name").value,
+document.getElementById("class").value,
+document.getElementById("race").value
+);
+}
+
+function showPage(page,el){
+document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
+el.classList.add("active");
+if(page==="dashboard") renderDashboard();
+if(page==="profile") renderProfile();
+if(page==="skills") renderSkills();
+}
+
+renderDashboard();
+
+</script>
 
 </body>
 </html>
