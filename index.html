@@ -83,7 +83,6 @@
     .xp-fill {
       height: 100%;
       background-color: white;
-      width: 0%;
     }
 
     .toggle-btn, .xp-btn {
@@ -126,16 +125,42 @@
 
     let xp = parseInt(localStorage.getItem("xp")) || 0;
 
-    function getLevel() {
-      return Math.floor(xp / 100) + 1;
+    const missions = [
+      { name: "Treino físico intenso", type: "Daily", xp: 20 },
+      { name: "Estudo foco total 2h", type: "Daily", xp: 20 },
+      { name: "Meta semanal concluída", type: "Weekly", xp: 100 },
+      { name: "Projeto entregue", type: "Hard", xp: 250 },
+      { name: "Desafio extremo completo", type: "Legendary", xp: 500 }
+    ];
+
+    function calculateLevel(totalXp) {
+      let level = 1;
+      let xpNeeded = 100;
+
+      while (totalXp >= xpNeeded) {
+        totalXp -= xpNeeded;
+        level++;
+        xpNeeded = level * 100;
+      }
+
+      return level;
     }
 
-    function getXpForNextLevel() {
-      return getLevel() * 100;
+    function xpForNextLevel(level) {
+      return level * 100;
     }
 
-    function getXpProgress() {
-      return xp % 100;
+    function currentXpInLevel(totalXp) {
+      let level = 1;
+      let xpNeeded = 100;
+
+      while (totalXp >= xpNeeded) {
+        totalXp -= xpNeeded;
+        level++;
+        xpNeeded = level * 100;
+      }
+
+      return totalXp;
     }
 
     function addXp(amount) {
@@ -145,9 +170,10 @@
     }
 
     function renderDashboard() {
-      const level = getLevel();
-      const progress = getXpProgress();
-      const nextLevelXp = getXpForNextLevel();
+      const level = calculateLevel(xp);
+      const xpInLevel = currentXpInLevel(xp);
+      const nextLevelXp = xpForNextLevel(level);
+      const progressPercent = (xpInLevel / nextLevelXp) * 100;
 
       const content = document.getElementById("content");
 
@@ -155,13 +181,36 @@
         <h1>Dashboard</h1>
         <div class="card">
           <h3>Level ${level}</h3>
-          <p>XP: ${progress} / 100</p>
+          <p>XP: ${xpInLevel} / ${nextLevelXp}</p>
           <div class="xp-bar">
-            <div class="xp-fill" style="width:${progress}%"></div>
+            <div class="xp-fill" style="width:${progressPercent}%"></div>
           </div>
-          <button class="xp-btn" onclick="addXp(20)">Gain 20 XP</button>
         </div>
       `;
+    }
+
+    function renderGoals() {
+      const content = document.getElementById("content");
+
+      let missionsHTML = missions.map((mission, index) => `
+        <div class="card">
+          <h3>${mission.name}</h3>
+          <p>Type: ${mission.type}</p>
+          <p>Reward: +${mission.xp} XP</p>
+          <button class="xp-btn" onclick="completeMission(${index})">
+            Complete Mission
+          </button>
+        </div>
+      `).join("");
+
+      content.innerHTML = `
+        <h1>Goals</h1>
+        ${missionsHTML}
+      `;
+    }
+
+    function completeMission(index) {
+      addXp(missions[index].xp);
     }
 
     function showPage(page, element) {
@@ -172,21 +221,13 @@
       element.classList.add("active");
 
       if (page === "dashboard") renderDashboard();
-
-      if (page === "goals") {
-        document.getElementById("content").innerHTML = `
-          <h1>Goals</h1>
-          <div class="card">
-            <p>No goals added yet.</p>
-          </div>
-        `;
-      }
+      if (page === "goals") renderGoals();
 
       if (page === "streak") {
         document.getElementById("content").innerHTML = `
           <h1>Streak</h1>
           <div class="card">
-            <p>Current streak: 5 days</p>
+            <p>Coming soon.</p>
           </div>
         `;
       }
@@ -196,6 +237,7 @@
           <h1>Profile</h1>
           <div class="card">
             <p>Total XP: ${xp}</p>
+            <p>Current Level: ${calculateLevel(xp)}</p>
           </div>
         `;
       }
