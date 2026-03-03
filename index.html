@@ -36,13 +36,8 @@
       flex-direction: column;
     }
 
-    body.dark .sidebar {
-      background-color: #141414;
-    }
-
-    body.light .sidebar {
-      background-color: #ffffff;
-    }
+    body.dark .sidebar { background-color: #141414; }
+    body.light .sidebar { background-color: #ffffff; }
 
     .sidebar h2 {
       margin-bottom: 40px;
@@ -56,14 +51,8 @@
       opacity: 0.6;
     }
 
-    .menu-item:hover {
-      opacity: 1;
-    }
-
-    .menu-item.active {
-      font-weight: bold;
-      opacity: 1;
-    }
+    .menu-item:hover { opacity: 1; }
+    .menu-item.active { font-weight: bold; opacity: 1; }
 
     .main {
       flex: 1;
@@ -76,29 +65,43 @@
       margin-bottom: 20px;
     }
 
-    body.dark .card {
-      background-color: #1c1c1c;
-    }
-
+    body.dark .card { background-color: #1c1c1c; }
     body.light .card {
       background-color: #ffffff;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    .toggle-btn {
-      margin-top: auto;
+    .xp-bar {
+      width: 100%;
+      height: 10px;
+      background-color: #333;
+      border-radius: 5px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .xp-fill {
+      height: 100%;
+      background-color: white;
+      width: 0%;
+    }
+
+    .toggle-btn, .xp-btn {
       padding: 10px;
       border: none;
       cursor: pointer;
       font-weight: bold;
+      margin-top: 10px;
     }
 
-    body.dark .toggle-btn {
+    body.dark .toggle-btn,
+    body.dark .xp-btn {
       background-color: white;
       color: black;
     }
 
-    body.light .toggle-btn {
+    body.light .toggle-btn,
+    body.light .xp-btn {
       background-color: black;
       color: white;
     }
@@ -121,6 +124,46 @@
 
   <script>
 
+    let xp = parseInt(localStorage.getItem("xp")) || 0;
+
+    function getLevel() {
+      return Math.floor(xp / 100) + 1;
+    }
+
+    function getXpForNextLevel() {
+      return getLevel() * 100;
+    }
+
+    function getXpProgress() {
+      return xp % 100;
+    }
+
+    function addXp(amount) {
+      xp += amount;
+      localStorage.setItem("xp", xp);
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      const level = getLevel();
+      const progress = getXpProgress();
+      const nextLevelXp = getXpForNextLevel();
+
+      const content = document.getElementById("content");
+
+      content.innerHTML = `
+        <h1>Dashboard</h1>
+        <div class="card">
+          <h3>Level ${level}</h3>
+          <p>XP: ${progress} / 100</p>
+          <div class="xp-bar">
+            <div class="xp-fill" style="width:${progress}%"></div>
+          </div>
+          <button class="xp-btn" onclick="addXp(20)">Gain 20 XP</button>
+        </div>
+      `;
+    }
+
     function showPage(page, element) {
       document.querySelectorAll(".menu-item").forEach(item => {
         item.classList.remove("active");
@@ -128,26 +171,10 @@
 
       element.classList.add("active");
 
-      const content = document.getElementById("content");
-
-      if (page === "dashboard") {
-        content.innerHTML = `
-          <h1>Dashboard</h1>
-          <div class="card">
-            <h3>Level 4</h3>
-            <p>XP: 240 / 500</p>
-          </div>
-          <div class="card">
-            <h3>Today's Focus</h3>
-            <p>• Train</p>
-            <p>• Study</p>
-            <p>• Build</p>
-          </div>
-        `;
-      }
+      if (page === "dashboard") renderDashboard();
 
       if (page === "goals") {
-        content.innerHTML = `
+        document.getElementById("content").innerHTML = `
           <h1>Goals</h1>
           <div class="card">
             <p>No goals added yet.</p>
@@ -156,7 +183,7 @@
       }
 
       if (page === "streak") {
-        content.innerHTML = `
+        document.getElementById("content").innerHTML = `
           <h1>Streak</h1>
           <div class="card">
             <p>Current streak: 5 days</p>
@@ -165,11 +192,10 @@
       }
 
       if (page === "profile") {
-        content.innerHTML = `
+        document.getElementById("content").innerHTML = `
           <h1>Profile</h1>
           <div class="card">
-            <p>Name: User</p>
-            <p>Rank: Bronze</p>
+            <p>Total XP: ${xp}</p>
           </div>
         `;
       }
