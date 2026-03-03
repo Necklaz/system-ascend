@@ -53,7 +53,6 @@
     .menu-item {
       margin-bottom: 20px;
       cursor: pointer;
-      color: inherit;
       opacity: 0.6;
     }
 
@@ -121,6 +120,7 @@
   <div class="main" id="content"></div>
 
   <script>
+
     function showPage(page, element) {
       document.querySelectorAll(".menu-item").forEach(item => {
         item.classList.remove("active");
@@ -136,6 +136,12 @@
           <div class="card">
             <h3>Level 4</h3>
             <p>XP: 240 / 500</p>
+          </div>
+          <div class="card">
+            <h3>Today's Focus</h3>
+            <p>• Train</p>
+            <p>• Study</p>
+            <p>• Build</p>
           </div>
         `;
       }
@@ -170,20 +176,27 @@
     }
 
     function toggleMode() {
-  const body = document.body;
+      const body = document.body;
 
-  if (body.classList.contains("dark")) {
-    body.classList.remove("dark");
-    body.classList.add("light");
-    localStorage.setItem("theme", "light");
-  } else {
-    body.classList.remove("light");
-    body.classList.add("dark");
-    localStorage.setItem("theme", "dark");
-  }
+      if (body.classList.contains("dark")) {
+        body.classList.remove("dark");
+        body.classList.add("light");
+        localStorage.setItem("theme", "light");
+      } else {
+        body.classList.remove("light");
+        body.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+      }
+    }
+
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      document.body.classList.remove("dark", "light");
+      document.body.classList.add(savedTheme);
     }
 
     showPage("dashboard", document.querySelector(".menu-item"));
+
   </script>
 
 </body>
