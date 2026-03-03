@@ -7,102 +7,62 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
-body{display:flex;height:100vh;background:#0e0e0e;color:white}
+body{display:flex;height:100vh;background:#0e0e0e;color:white;overflow:hidden}
 .sidebar{width:240px;background:#141414;padding:20px}
 .menu-item{margin-bottom:15px;cursor:pointer;opacity:.7}
 .menu-item:hover{opacity:1}
 .menu-item.active{font-weight:bold;opacity:1}
-.main{flex:1;padding:30px;overflow:auto}
+.main{flex:1;padding:30px;overflow:auto;position:relative}
 .card{background:#1c1c1c;padding:20px;border-radius:8px;margin-bottom:20px}
-button{padding:8px 12px;margin:5px;cursor:pointer;border:none;background:white;color:black;font-weight:bold}
-.xp-bar{width:100%;height:10px;background:#333;border-radius:5px;margin-top:10px}
-.xp-fill{height:100%;background:white}
+button{padding:8px 12px;margin:5px;border:none;background:white;color:black;font-weight:bold;cursor:pointer}
 
-/* Holograma */
+/* KARMA VISUAL */
 
-.hologram-container{
-display:flex;
-justify-content:center;
-align-items:center;
-height:400px;
-perspective:1000px;
-}
+.good-karma{box-shadow:0 0 40px #00ffcc}
+.bad-karma{box-shadow:0 0 40px #ff0033}
 
-.hologram{
-width:250px;
-height:350px;
-position:relative;
-transform-style:preserve-3d;
-transition:transform 0.1s ease;
-}
+/* GUIDE ORB */
 
-.character-wrapper{
-position:relative;
-width:250px;
-height:350px;
-animation:breath 4s infinite ease-in-out;
-}
-
-@keyframes breath{
-0%,100%{transform:translateY(0px)}
-50%{transform:translateY(-5px)}
-}
-
-.character-wrapper img{
-width:100%;
-height:100%;
-object-fit:contain;
-filter:drop-shadow(0 0 20px rgba(0,255,255,0.7));
-transition:filter 0.3s;
-}
-
-.eye{
+#guide{
 position:absolute;
-width:16px;
-height:16px;
-background:black;
-border-radius:50%;
-top:120px;
+width:90px;height:90px;border-radius:50%;
+background:radial-gradient(circle,#00ffff,#002222);
+box-shadow:0 0 30px #00ffff;
+display:none;align-items:center;justify-content:center;
+animation:pulse 2s infinite;
+cursor:pointer;
+z-index:999;
+flex-direction:column;
 }
 
-.eye.left{ left:85px; }
-.eye.right{ right:85px; }
+@keyframes pulse{
+0%,100%{transform:scale(1)}
+50%{transform:scale(1.1)}
+}
 
-.eyelid{
+#guideText{
 position:absolute;
-width:16px;
-height:16px;
-background:#f2d6c9;
-border-radius:50%;
-top:120px;
-pointer-events:none;
+bottom:110px;
+width:260px;
+background:#111;
+padding:12px;
+border-radius:8px;
+font-size:14px;
 }
 
-.eyelid.left{ left:85px; }
-.eyelid.right{ right:85px; }
-
-.blink{
-animation:blinkAnim 0.2s forwards;
+.choice{
+display:block;
+margin-top:6px;
+padding:6px;
+background:#222;
+cursor:pointer;
+border-radius:4px;
 }
 
-@keyframes blinkAnim{
-0%{height:16px}
-50%{height:2px}
-100%{height:16px}
-}
+.choice:hover{background:#333}
 
-/* Status effects */
-
-.poison img{filter:hue-rotate(100deg) brightness(0.8)}
-.burn img{filter:hue-rotate(-30deg) brightness(1.2)}
-.freeze img{filter:hue-rotate(180deg) brightness(0.9)}
-.curse img{filter:grayscale(1) contrast(1.3)}
-.bleed img{filter:hue-rotate(-10deg)}
-.hunger img{filter:brightness(0.7)}
-.weak img{filter:blur(1px)}
 </style>
 </head>
-
 <body>
 
 <div class="sidebar">
@@ -113,175 +73,152 @@ animation:blinkAnim 0.2s forwards;
 
 <div class="main" id="content"></div>
 
+<div id="guide">
+<div id="guideText"></div>
+</div>
+
 <script>
 
-let xp=parseInt(localStorage.getItem("xp"))||0;
+let karma=parseInt(localStorage.getItem("karma"))||0;
+let entityMood=localStorage.getItem("entityMood")||"neutral";
+let memory=JSON.parse(localStorage.getItem("entityMemory"))||[];
 let player=JSON.parse(localStorage.getItem("player"))||null;
-let currentStatus=null;
+let guide=document.getElementById("guide");
+let guideText=document.getElementById("guideText");
 
-function save(){
-localStorage.setItem("xp",xp);
+/* SAVE SYSTEM */
+
+function saveAll(){
+localStorage.setItem("karma",karma);
+localStorage.setItem("entityMood",entityMood);
+localStorage.setItem("entityMemory",JSON.stringify(memory));
 localStorage.setItem("player",JSON.stringify(player));
 }
 
-function calculateLevel(totalXp){
-let level=1;
-let xpNeeded=100;
-while(totalXp>=xpNeeded){
-totalXp-=xpNeeded;
-level++;
-xpNeeded=level*100;
-}
-return level;
+/* KARMA SYSTEM */
+
+function updateKarma(value){
+karma+=value;
+if(karma>50) entityMood="pleased";
+if(karma<-50) entityMood="hostile";
+if(karma<=50 && karma>=-50) entityMood="neutral";
+saveAll();
+updateKarmaVisual();
 }
 
-function createCharacter(name){
-player={name:name,attributes:{strength:5,intelligence:5,discipline:5,energy:5}};
-save();
+function updateKarmaVisual(){
+guide.classList.remove("good-karma","bad-karma");
+if(karma>20) guide.classList.add("good-karma");
+if(karma<-20) guide.classList.add("bad-karma");
+}
+
+/* ENTITY DIALOG SYSTEM */
+
+function showDialogue(text,choices){
+guide.style.display="flex";
+guide.style.top="60px";
+guide.style.right="60px";
+
+guideText.innerHTML="<div>"+text+"</div>";
+
+if(choices){
+choices.forEach(c=>{
+let div=document.createElement("div");
+div.className="choice";
+div.innerText=c.text;
+div.onclick=()=>{
+c.effect();
+guide.style.display="none";
+};
+guideText.appendChild(div);
+});
+}
+}
+
+function entitySpeak(){
+
+if(entityMood==="pleased"){
+showDialogue("You walk a path of light. Interesting.",
+[
+{text:"Continue helping others (+10 Karma)",effect:()=>updateKarma(10)},
+{text:"Mock the weak (-15 Karma)",effect:()=>updateKarma(-15)}
+]);
+}
+
+else if(entityMood==="hostile"){
+showDialogue("Your corruption grows. I approve.",
+[
+{text:"Embrace darkness (-10 Karma)",effect:()=>updateKarma(-10)},
+{text:"Seek redemption (+20 Karma)",effect:()=>updateKarma(20)}
+]);
+}
+
+else{
+showDialogue("You remain balanced... for now.",
+[
+{text:"Do a noble act (+5 Karma)",effect:()=>updateKarma(5)},
+{text:"Cause chaos (-5 Karma)",effect:()=>updateKarma(-5)}
+]);
+}
+}
+
+/* PROFILE */
+
+function renderProfile(){
+document.getElementById("content").innerHTML=`
+<h1>${player?player.name:"Unknown"}</h1>
+<div class="card">
+Karma: ${karma}
+<button onclick="entitySpeak()">Speak with Entity</button>
+</div>
+`;
+updateKarmaVisual();
+}
+
+/* DASHBOARD */
+
+function renderDashboard(){
+document.getElementById("content").innerHTML=`
+<h1>System Ascend</h1>
+<div class="card">
+${!player?'<input id="name" placeholder="Name"><button onclick="start()">Start</button>':
+'<button onclick="renderProfile()">Open Profile</button>'}
+</div>
+`;
+}
+
+/* ENTITY MEMORY EVOLUTION */
+
+function entityEvolution(){
+if(memory.length>5 && entityMood==="hostile"){
+showDialogue("You have chosen darkness repeatedly. I will remember this.");
+}
+if(memory.length>5 && entityMood==="pleased"){
+showDialogue("Consistency in virtue. Unexpected.");
+}
+}
+
+/* START */
+
+function start(){
+player={name:document.getElementById("name").value};
+memory.push("created");
+saveAll();
 renderDashboard();
 }
 
-function renderDashboard(){
-if(!player){
-document.getElementById("content").innerHTML=`
-<div class="card">
-<input id="name" placeholder="Name"><br><br>
-<button onclick="start()">Start</button>
-</div>`;
-return;
-}
-
-let lvl=calculateLevel(xp);
-
-document.getElementById("content").innerHTML=`
-<h1>${player.name}</h1>
-<div class="card">
-<p>Level: ${lvl}</p>
-<button onclick="renderProfile()">Open Profile</button>
-</div>
-`;
-}
-
-function renderProfile(){
-
-document.getElementById("content").innerHTML=`
-<h1>Profile</h1>
-
-<div class="card">
-
-<div class="hologram-container">
-<div class="hologram" id="holo">
-
-<div class="character-wrapper" id="character">
-
-<img src="https://i.imgur.com/8Qf4K8X.png">
-
-<div class="eye left"></div>
-<div class="eye right"></div>
-
-<div class="eyelid left"></div>
-<div class="eyelid right"></div>
-
-</div>
-
-</div>
-</div>
-
-<div>
-<button onclick="applyStatus('poison')">Poison</button>
-<button onclick="applyStatus('burn')">Burn</button>
-<button onclick="applyStatus('freeze')">Freeze</button>
-<button onclick="applyStatus('curse')">Curse</button>
-<button onclick="applyStatus('bleed')">Bleed</button>
-<button onclick="applyStatus('hunger')">Hunger</button>
-<button onclick="applyStatus('weak')">Weak</button>
-<button onclick="applyStatus(null)">Clear</button>
-</div>
-
-</div>
-`;
-
-let holo=document.getElementById("holo");
-let character=document.getElementById("character");
-let eyes=document.querySelectorAll(".eye");
-let eyelids=document.querySelectorAll(".eyelid");
-
-let currentX=0;
-let currentY=0;
-
-document.addEventListener("mousemove",(e)=>{
-let rect=holo.getBoundingClientRect();
-let centerX=rect.left+rect.width/2;
-let centerY=rect.top+rect.height/2;
-
-let offsetX=(e.clientX-centerX)/25;
-let offsetY=(e.clientY-centerY)/25;
-
-holo.style.transform=`rotateX(${-offsetY}deg) rotateY(${offsetX}deg)`;
-
-moveEyes(e.clientX,e.clientY);
-});
-
-document.addEventListener("touchmove",(e)=>{
-let touch=e.touches[0];
-moveEyes(touch.clientX,touch.clientY);
-});
-
-function moveEyes(x,y){
-eyes.forEach(eye=>{
-let rect=eye.getBoundingClientRect();
-let eyeX=rect.left+rect.width/2;
-let eyeY=rect.top+rect.height/2;
-
-let angle=Math.atan2(y-eyeY,x-eyeX);
-let maxMove=5;
-
-let moveX=Math.cos(angle)*maxMove;
-let moveY=Math.sin(angle)*maxMove;
-
-eye.style.transform=`translate(${moveX}px,${moveY}px)`;
-
-let distance=Math.hypot(x-eyeX,y-eyeY);
-let dilation=Math.min(distance/50,4);
-eye.style.width=16+dilation+"px";
-eye.style.height=16+dilation+"px";
-});
-}
-
-/* Blink system */
-
-setInterval(()=>{
-eyelids.forEach(lid=>{
-lid.classList.add("blink");
-setTimeout(()=>lid.classList.remove("blink"),200);
-});
-},4000);
-
-}
-
-function applyStatus(status){
-let character=document.getElementById("character");
-character.className="character-wrapper";
-if(status){
-character.classList.add(status);
-currentStatus=status;
-}
-}
-
-function start(){
-createCharacter(document.getElementById("name").value);
-}
+/* PAGE SWITCH */
 
 function showPage(page,el){
 document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
 el.classList.add("active");
-if(page==="dashboard") renderDashboard();
-if(page==="profile") renderProfile();
+if(page==="dashboard")renderDashboard();
+if(page==="profile")renderProfile();
 }
 
 renderDashboard();
+entityEvolution();
 
 </script>
-
 </body>
 </html>
