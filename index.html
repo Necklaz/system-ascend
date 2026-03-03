@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>System Ascend</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
 body{display:flex;height:100vh;background:#0d0d0d;color:white;overflow:hidden}
@@ -17,7 +16,6 @@ body{display:flex;height:100vh;background:#0d0d0d;color:white;overflow:hidden}
 button{padding:8px 12px;margin:5px;border:none;background:white;color:black;font-weight:bold;cursor:pointer}
 
 /* HUD */
-
 .hud{
 position:absolute;
 top:20px;
@@ -25,9 +23,8 @@ right:20px;
 background:#111;
 padding:15px;
 border-radius:8px;
-width:200px;
+width:220px;
 }
-
 .bar{
 height:15px;
 background:#333;
@@ -35,14 +32,12 @@ border-radius:8px;
 overflow:hidden;
 margin-bottom:10px;
 }
-
 .fill{
 height:100%;
 background:#00ffcc;
 }
 
 /* CHARACTER */
-
 .character-container{
 width:100%;
 height:450px;
@@ -51,94 +46,130 @@ justify-content:center;
 align-items:center;
 perspective:900px;
 }
-
 .character{
-width:200px;
-height:320px;
+width:120px;
+height:300px;
 position:relative;
 transition:transform .1s linear;
+display:flex;
+flex-direction:column;
+align-items:center;
 }
-
 .head{
-width:160px;
-height:160px;
+width:100px;
+height:100px;
 background:#222;
 border-radius:50%;
-margin:auto;
 position:relative;
-}
-
-.body{
-width:140px;
-height:150px;
-background:#333;
-margin:10px auto 0 auto;
-border-radius:20px;
-}
-
-.eyes{
-position:absolute;
-top:60px;
-width:100%;
+box-shadow:0 0 30px #00ffff22;
 display:flex;
-justify-content:space-around;
+justify-content:center;
+align-items:center;
+flex-direction:column;
 }
-
+.eyes{
+width:80%;
+display:flex;
+justify-content:space-between;
+position:relative;
+top:10px;
+}
 .eye{
-width:36px;
-height:36px;
+width:20px;
+height:20px;
 background:white;
 border-radius:50%;
 overflow:hidden;
 position:relative;
 }
-
 .pupil{
-width:16px;
-height:16px;
+width:10px;
+height:10px;
 background:black;
 border-radius:50%;
 position:absolute;
-top:10px;
-left:10px;
+top:5px;
+left:5px;
 transition:.05s;
 }
-
 .mouth{
-width:50px;
-height:18px;
+width:40px;
+height:12px;
 background:#111;
-border-radius:0 0 30px 30px;
+border-radius:0 0 20px 20px;
 position:absolute;
-bottom:35px;
-left:55px;
+bottom:10px;
+left:30%;
 }
 
-/* STATUS VISUALS */
+/* BODY */
+.body{
+width:60px;
+height:100px;
+background:#333;
+border-radius:20px;
+position:relative;
+margin-top:10px;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+flex-direction:column;
+}
+.arm{
+width:15px;
+height:60px;
+background:#333;
+position:absolute;
+top:10px;
+}
+.arm.left{left:-20px;}
+.arm.right{right:-20px;}
+.leg{
+width:20px;
+height:70px;
+background:#333;
+position:absolute;
+bottom:-70px;
+}
+.leg.left{left:0;}
+.leg.right{right:0;}
 
+/* STATUS VISUALS */
 .poison{filter:hue-rotate(90deg)}
 .burn{animation:burn 1s infinite}
 .freeze{filter:hue-rotate(180deg) brightness(1.2)}
 .bleed{animation:bleed .8s infinite}
 .curse{box-shadow:0 0 40px purple}
 .weak{opacity:.6}
+@keyframes burn{0%{box-shadow:0 0 10px red}50%{box-shadow:0 0 30px orange}100%{box-shadow:0 0 10px red}}
+@keyframes bleed{0%{transform:translateX(0)}50%{transform:translateX(2px)}100%{transform:translateX(0)}}
 
-@keyframes burn{
-0%{box-shadow:0 0 10px red}
-50%{box-shadow:0 0 30px orange}
-100%{box-shadow:0 0 10px red}
+/* ENTITY */
+.entity-container{
+width:150px;
+height:150px;
+border-radius:50%;
+background:#00f;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+font-weight:bold;
+position:relative;
+margin:20px auto;
+cursor:pointer;
+transition:transform .2s ease;
 }
-
-@keyframes bleed{
-0%{transform:translateX(0)}
-50%{transform:translateX(2px)}
-100%{transform:translateX(0)}
+.entity-speech{
+position:absolute;
+top:-30px;
+width:200px;
+text-align:center;
+font-size:14px;
 }
-
 </style>
 </head>
 <body>
-
 <div class="sidebar">
 <h2>SISTEMA</h2>
 <div class="menu-item active" onclick="showPage('dashboard',this)">Painel</div>
@@ -148,27 +179,13 @@ left:55px;
 <div class="main" id="content"></div>
 
 <script>
-
 /* STATE */
-
-let karma=parseInt(localStorage.getItem("karma"))||0;
-
-let player=JSON.parse(localStorage.getItem("player"))||{
-name:null,
-hp:100,
-maxHp:100,
-resistance:10
-};
-
-let activeEffects=JSON.parse(localStorage.getItem("effects"))||[];
-
-let enemyAI={
-normal:{debuffChance:0.3,damage:10},
-boss:{debuffChance:0.7,damage:20}
-};
+let karma = parseInt(localStorage.getItem("karma"))||0;
+let player = JSON.parse(localStorage.getItem("player"))||{name:null,hp:100,maxHp:100,resistance:10};
+let activeEffects = JSON.parse(localStorage.getItem("effects"))||[];
+let lastEntityInteraction = 0;
 
 /* SAVE */
-
 function saveAll(){
 localStorage.setItem("karma",karma);
 localStorage.setItem("player",JSON.stringify(player));
@@ -176,16 +193,14 @@ localStorage.setItem("effects",JSON.stringify(activeEffects));
 }
 
 /* PAGE CONTROL */
-
 function showPage(page,el){
 document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
 el.classList.add("active");
-if(page==="dashboard")renderDashboard();
-if(page==="profile")renderProfile();
+if(page==="dashboard") renderDashboard();
+if(page==="profile") renderProfile();
 }
 
 /* DASHBOARD */
-
 function renderDashboard(){
 document.getElementById("content").innerHTML=`
 <h1>System Ascend</h1>
@@ -195,82 +210,82 @@ ${!player.name?'<input id="name" placeholder="Nome"><button onclick="start()">Cr
 <button onclick="battle(false)">Batalha Normal</button>
 <button onclick="battle(true)">Enfrentar Boss</button>
 </div>
+<div class="entity-container" onclick="interactEntity()">
+<div class="entity-speech" id="entitySpeech">Causar o Caos -5 Karma</div>ENTIDADE
+</div>
 `;
+setupCharacter();
+updateEntitySpeech();
 }
 
 /* PROFILE */
-
 function renderProfile(){
+const resistance = player.resistance || 0;
 document.getElementById("content").innerHTML=`
 <h1>${player.name}</h1>
-
 <div class="hud">
 <div>HP</div>
 <div class="bar"><div class="fill" style="width:${(player.hp/player.maxHp)*100}%"></div></div>
 <div>Karma: ${karma}</div>
-<div>Resistência: ${player.resistance}%</div>
+<div>Resistência: ${resistance}%</div>
 </div>
 
 <div class="character-container">
-  <div class="character" id="character">
-    <div class="head">
-      <div class="eyes">
-        <div class="eye"><div class="pupil" id="pupilL"></div></div>
-        <div class="eye"><div class="pupil" id="pupilR"></div></div>
-      </div>
-      <div class="mouth"></div>
-    </div>
-    <div class="body"></div>
-  </div>
+<div class="character" id="character">
+<div class="head">
+<div class="eyes">
+<div class="eye"><div class="pupil" id="pupilL"></div></div>
+<div class="eye"><div class="pupil" id="pupilR"></div></div>
+</div>
+<div class="mouth"></div>
+</div>
+<div class="body">
+<div class="arm left"></div>
+<div class="arm right"></div>
+<div class="leg left"></div>
+<div class="leg right"></div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<button onclick="interactEntity()">Falar com a entidade</button>
 </div>
 `;
-
 setupCharacter();
 applyEffects();
+updateEntitySpeech();
 }
 
 /* CHARACTER MOVEMENT */
-
 function setupCharacter(){
 const character=document.getElementById("character");
+if(!character) return;
 const pupilL=document.getElementById("pupilL");
 const pupilR=document.getElementById("pupilR");
 
-document.onmousemove=function(e){
-move(e.clientX,e.clientY);
-};
-
-document.ontouchmove=function(e){
-move(e.touches[0].clientX,e.touches[0].clientY);
-};
+document.onmousemove=function(e){move(e.clientX,e.clientY)};
+document.ontouchmove=function(e){move(e.touches[0].clientX,e.touches[0].clientY)};
 
 function move(x,y){
 let rect=character.getBoundingClientRect();
 let cx=rect.left+rect.width/2;
 let cy=rect.top+rect.height/2;
-
 let dx=(x-cx)/20;
 let dy=(y-cy)/20;
-
 pupilL.style.transform=`translate(${dx}px,${dy}px)`;
 pupilR.style.transform=`translate(${dx}px,${dy}px)`;
-
 character.style.transform=`rotateX(${-(y-cy)/30}deg) rotateY(${(x-cx)/30}deg)`;
 }
 }
 
 /* BATTLE SYSTEM */
-
+let enemyAI={normal:{debuffChance:0.3,damage:10},boss:{debuffChance:0.7,damage:20}};
 function battle(isBoss){
 let enemy=isBoss?enemyAI.boss:enemyAI.normal;
-
 player.hp-=enemy.damage;
 if(player.hp<0)player.hp=0;
-
-if(Math.random()<enemy.debuffChance){
-applyRandomEffect();
-}
-
+if(Math.random()<enemy.debuffChance) applyRandomEffect();
 if(player.hp===0){
 karma-=10;
 alert("Você foi derrotado.");
@@ -279,29 +294,23 @@ player.hp=player.maxHp;
 karma+=5;
 alert("Você venceu.");
 }
-
 saveAll();
 renderProfile();
 }
 
 /* EFFECTS */
-
 function applyRandomEffect(){
 let effects=["poison","burn","freeze","bleed","curse","weak"];
 let type=effects[Math.floor(Math.random()*effects.length)];
-
-if(Math.random()*100<player.resistance)return;
-
+if(Math.random()*100<player.resistance) return;
 activeEffects.push({type:type,duration:5000});
 saveAll();
 }
-
 function applyEffects(){
 const character=document.getElementById("character");
-
+if(!character) return;
 activeEffects.forEach(effect=>{
 character.classList.add(effect.type);
-
 setTimeout(()=>{
 character.classList.remove(effect.type);
 activeEffects=activeEffects.filter(e=>e!==effect);
@@ -310,14 +319,43 @@ saveAll();
 });
 }
 
-/* START */
+/* ENTITY INTERACTION */
+function interactEntity(){
+let now = Date.now();
+if(now - lastEntityInteraction < 30000){
+alert("A entidade está ocupada, tente mais tarde.");
+return;
+}
+lastEntityInteraction = now;
+karma -=5;
+updateEntitySpeech();
+alert("A entidade respondeu! Karma -5");
+saveAll();
+renderProfile();
+}
+function updateEntitySpeech(){
+let entitySpeech = document.getElementById("entitySpeech");
+if(!entitySpeech) return;
+if(karma<0){
+entitySpeech.textContent="Você está no limite do caos!";
+}else{
+entitySpeech.textContent="Causar o Caos -5 Karma";
+}
+}
 
+/* START */
 function start(){
-player.name=document.getElementById("name").value;
+const nameInput = document.getElementById("name").value;
+if(!nameInput) return alert("Digite um nome");
+player.name = nameInput;
+player.hp = 100;
+player.maxHp = 100;
+player.resistance = 10;
 saveAll();
 renderDashboard();
 }
 
+/* FORCE INITIAL RENDER */
 renderDashboard();
 
 </script>
